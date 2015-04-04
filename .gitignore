@@ -1,0 +1,12 @@
+*.d51
+*.r51
+*.pbi
+*.hex
+*.map
+*.pbd
+*.bat
+*.dbgdt
+*.dni
+*.wsdt
+/Projects/ble/SimpleBLECentral/CC2541/*.cfg
+*.cfg
