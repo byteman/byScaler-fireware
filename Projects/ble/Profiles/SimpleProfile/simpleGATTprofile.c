@@ -50,7 +50,7 @@
 #include "gapbondmgr.h"
 
 #include "simpleGATTprofile.h"
-
+#include <string.h>
 /*********************************************************************
  * MACROS
  */
@@ -152,7 +152,7 @@ static uint8 simpleProfileChar1UserDesp[17] = "Characteristic 1\0";
 static uint8 simpleProfileChar2Props = GATT_PROP_READ;
 
 // Characteristic 2 Value
-static uint8 simpleProfileChar2 = 0;
+static int32 simpleProfileChar2 = 0;
 
 // Simple Profile Characteristic 2 User Description
 static uint8 simpleProfileChar2UserDesp[17] = "Characteristic 2\0";
@@ -270,7 +270,7 @@ static gattAttribute_t simpleProfileAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
         { ATT_BT_UUID_SIZE, simpleProfilechar2UUID },
         GATT_PERMIT_READ, 
         0, 
-        &simpleProfileChar2 
+        (uint8*)&simpleProfileChar2 
       },
 
       // Characteristic 2 User Description
@@ -536,9 +536,9 @@ bStatus_t SimpleProfile_SetParameter( uint8 param, uint8 len, void *value )
       break;
 
     case SIMPLEPROFILE_CHAR2:
-      if ( len == sizeof ( uint8 ) ) 
+      if ( len == sizeof ( int32 ) ) 
       {
-        simpleProfileChar2 = *((uint8*)value);
+        simpleProfileChar2 = *((int32*)value);
       }
       else
       {
@@ -642,7 +642,7 @@ bStatus_t SimpleProfile_GetParameter( uint8 param, void *value )
       break;
 
     case SIMPLEPROFILE_CHAR2:
-      *((uint8*)value) = simpleProfileChar2;
+      *((int32*)value) = simpleProfileChar2;
       break;      
 
     case SIMPLEPROFILE_CHAR3:
@@ -720,12 +720,16 @@ static uint8 simpleProfile_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr
       // characteristic 4 does not have read permissions, but because it
       //   can be sent as a notification, it is included here
       case SIMPLEPROFILE_CHAR1_UUID:
-      case SIMPLEPROFILE_CHAR2_UUID:
+      
       case SIMPLEPROFILE_CHAR4_UUID:
         *pLen = 1;
         pValue[0] = *pAttr->pValue;
         break;
-
+      case SIMPLEPROFILE_CHAR2_UUID:
+        *pLen = sizeof(int32);
+        memcpy(pValue, pAttr->pValue, sizeof(int32));
+        //pValue[0] = *pAttr->pValue;
+        break;
       case SIMPLEPROFILE_CHAR5_UUID:
         *pLen = SIMPLEPROFILE_CHAR5_LEN;
         VOID osal_memcpy( pValue, pAttr->pValue, SIMPLEPROFILE_CHAR5_LEN );
