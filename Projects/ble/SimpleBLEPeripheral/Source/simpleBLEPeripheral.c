@@ -718,11 +718,21 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
  * @return  none
  */
 static int32 ad = 0;
+static uint8 flag = 0;
 static void performPeriodicTask( void )
 {
   
   if(CS1237_ReadAD(&ad))
   {
+    if(flag)
+    {
+      HAL_TURN_ON_LED1();
+    }
+    else
+    {
+      HAL_TURN_OFF_LED1();
+    }
+    flag = !flag;
      SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR2,sizeof(int32),&ad);
   }
  

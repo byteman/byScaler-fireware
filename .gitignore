@@ -10,3 +10,4 @@
 *.wsdt
 /Projects/ble/SimpleBLECentral/CC2541/*.cfg
 *.cfg
+si
