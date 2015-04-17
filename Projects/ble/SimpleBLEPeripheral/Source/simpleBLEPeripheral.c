@@ -367,51 +367,16 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
 
   // Setup the SimpleProfile Characteristic Values
   {
-    uint8 charValue1 = 2;
-    int32 charValue2 = 1234;
-    uint8 charValue3 = 3;
-    uint8 charValue4 = 4;
-    uint8 charValue5[SIMPLEPROFILE_CHAR5_LEN] = { 1, 2, 3, 4, 5 };
-    uint8 charValue6[SIMPLEPROFILE_CHAR6_LEN] = { 1, 2, 3, 4, 5 };
-    uint8 charValue7[SIMPLEPROFILE_CHAR7_LEN] = { 1, 2, 3, 4, 5 };
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR1, sizeof ( uint8 ), &charValue1 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR2, sizeof ( int32 ), &charValue2 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR3, sizeof ( uint8 ), &charValue3 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR4, sizeof ( uint8 ), &charValue4 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR5, SIMPLEPROFILE_CHAR5_LEN, charValue5 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR6, SIMPLEPROFILE_CHAR6_LEN, charValue6 );
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR7, SIMPLEPROFILE_CHAR7_LEN, charValue7 );
+    int32 zero = 0;
+    float k = 1;
+    int32 weight = 0;
+    int32 ad = 0;
+    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR1, sizeof ( int32 ), &zero );
+    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR2, sizeof ( float ), &k );
+    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR3, sizeof ( int32 ), &weight );
+    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR4, sizeof ( int32 ), &ad );
   }
 
-
-#if defined( CC2540_MINIDKx )
-
-  SK_AddService( GATT_ALL_SERVICES ); // Simple Keys Profile
-
-  // Register for all key events - This app will handle all key events
-  RegisterForKeys( simpleBLEPeripheral_TaskID );
-
-  // makes sure LEDs are off
-  HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
-
-  // For keyfob board set GPIO pins into a power-optimized state
-  // Note that there is still some leakage current from the buzzer,
-  // accelerometer, LEDs, and buttons on the PCB.
-
-  P0SEL = 0; // Configure Port 0 as GPIO
-  P1SEL = 0; // Configure Port 1 as GPIO
-  P2SEL = 0; // Configure Port 2 as GPIO
-
-  P0DIR = 0xFC; // Port 0 pins P0.0 and P0.1 as input (buttons),
-                // all others (P0.2-P0.7) as output
-  P1DIR = 0xFF; // All port 1 pins (P1.0-P1.7) as output
-  P2DIR = 0x1F; // All port 1 pins (P2.0-P2.4) as output
-
-  P0 = 0x03; // All pins on port 0 to low except for P0.0 and P0.1 (buttons)
-  P1 = 0;   // All pins on port 1 to low
-  P2 = 0;   // All pins on port 2 to low
-
-#endif // #if defined( CC2540_MINIDK )
 
 #if (defined HAL_LCD) && (HAL_LCD == TRUE)
 
@@ -430,17 +395,6 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   // Register callback with SimpleGATTprofile
   VOID SimpleProfile_RegisterAppCBs( &simpleBLEPeripheral_SimpleProfileCBs );
 
-  // Enable clock divide on halt
-  // This reduces active current while radio is active and CC254x MCU
-  // is halted
-  //HCI_EXT_ClkDivOnHaltCmd( HCI_EXT_ENABLE_CLK_DIVIDE_ON_HALT );
-
-#if defined ( DC_DC_P0_7 )
-
-  // Enable stack to toggle bypass control on TPS62730 (DC/DC converter)
-  HCI_EXT_MapPmIoPortCmd( HCI_EXT_PM_IO_PORT_P0, HCI_EXT_PM_IO_PORT_PIN7 );
-
-#endif // defined ( DC_DC_P0_7 )
   CS1237_Init();
   // Setup a delayed profile startup
   osal_set_event( simpleBLEPeripheral_TaskID, SBP_START_DEVICE_EVT );
@@ -733,7 +687,7 @@ static void performPeriodicTask( void )
       HAL_TURN_OFF_LED1();
     }
     flag = !flag;
-     SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR2,sizeof(int32),&ad);
+    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4,sizeof(int32),&ad);
   }
  
 }
@@ -753,39 +707,7 @@ static void simpleProfileChangeCB( uint8 paramID )
   uint8 newChar6Value[15];
   
   switch( paramID )
-  {
-    case SIMPLEPROFILE_CHAR1:
-      SimpleProfile_GetParameter( SIMPLEPROFILE_CHAR1, &newValue );
-
-      #if (defined HAL_LCD) && (HAL_LCD == TRUE)
-        HalLcdWriteStringValue( "Char 1:", (uint16)(newValue), 10,  HAL_LCD_LINE_3 );
-      #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
-
-      break;
-
-    case SIMPLEPROFILE_CHAR3:
-      SimpleProfile_GetParameter( SIMPLEPROFILE_CHAR3, &newValue );
-
-      #if (defined HAL_LCD) && (HAL_LCD == TRUE)
-        HalLcdWriteStringValue( "Char 3:", (uint16)(newValue), 10,  HAL_LCD_LINE_3 );
-      #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
-
-      break;
-    
-    case SIMPLEPROFILE_CHAR6:
-      SimpleProfile_GetParameter( SIMPLEPROFILE_CHAR6, newChar6Value );
-      if( newChar6Value[0] >= 15 )
-      {
-        NPI_WriteTransport(&newChar6Value[1],14);
-        NPI_WriteTransport("...\n",4 ); 
-      }
-      else
-      {
-        NPI_WriteTransport(&newChar6Value[1],newChar6Value[0]);
-      }
-
-      break;
-      
+  {   
     default:
       // should not reach here!
       break;
@@ -838,10 +760,6 @@ static void NpiSerialCallback( uint8 port, uint8 events )
     numBytes = NPI_RxBufLen();       //读出串口缓冲区有多少字节
     if(numBytes)
     {
-      if ( numBytes >= SIMPLEPROFILE_CHAR7_LEN ) buf[0] = SIMPLEPROFILE_CHAR7_LEN-1;
-      else buf[0] = numBytes;
-      NPI_ReadTransport(&buf[1],buf[0]);    //从串口读出数据
-      SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR7,SIMPLEPROFILE_CHAR7_LEN, buf );
     }
   }
 }
