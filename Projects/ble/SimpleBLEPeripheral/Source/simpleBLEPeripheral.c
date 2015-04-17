@@ -367,8 +367,8 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
 
   // Setup the SimpleProfile Characteristic Values
   {
-    int32 zero = 0;
-    float k = 1;
+    int32 zero = 1000;
+    float k = 1.12;
     int32 weight = 0;
     int32 ad = 0;
     SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR1, sizeof ( int32 ), &zero );
