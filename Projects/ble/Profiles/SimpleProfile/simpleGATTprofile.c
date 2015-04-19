@@ -589,11 +589,11 @@ static bStatus_t simpleProfile_WriteAttrCB( uint16 connHandle, gattAttribute_t *
                 memcpy(pCurValue, pValue, len);
                 if(uuid == SIMPLEPROFILE_CHAR1_UUID)
                 {
-                  
+                   
                 }
                 else if(uuid == SIMPLEPROFILE_CHAR2_UUID)
                 {
-                  
+                  //Value_K = Value_K+1;
                 }
           }
 		  
