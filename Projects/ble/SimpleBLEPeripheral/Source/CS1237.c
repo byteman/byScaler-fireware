@@ -13,27 +13,27 @@ void Delay(int n)
 }
 void io_dir_in(void)
 {
-   P1DIR &= ~0x04;  //P1_1定义为输入 DIO
+   P0DIR &= ~(1<<5);  //P1_1定义为输入 DIO
 }
 void io_dir_out(void)
 {
-   P1DIR |= 0x04;  //P1_1定义为输出 DIO
+   P0DIR |= (1<<5);  //P1_1定义为输出 DIO
 }
 void clk_high(void)
 {
-  P1 |= 0x2;
+  P0 |= (1<<6);
 }
 void clk_low(void)
 {
-  P1 &= ~0x2;
+  P0 &= ~(1<<6);
 }
 void data_high(void)
 {
-  P1 |= 0x4;
+  P0 |= (1<<5);
 }
 void data_low(void)
 {
-  P1 &= ~0x4;
+  P0 &= ~(1<<5);
 }
 /******************************************************************************
   * @brief  .
@@ -44,6 +44,7 @@ void CS1237_Init(void)
 {
   //GPIO_Init(CS1237_DIO_GPIO_PORT, CS1237_DIO_GPIO_PINS, GPIO_MODE_IN_PU_NO_IT); //pull up dio
   //GPIO_Init(CS1237_CLK_GPIO_PORT, CS1237_CLK_GPIO_PINS, GPIO_MODE_OUT_PP_LOW_FAST); //pull down  clk
+#if 0
   P1SEL &= ~0x01; //普通IO口
   P1DIR |= 0x01;  //P1_1定义为输入 DIO
   P1INP &=~0x01;	//打开上拉
@@ -53,19 +54,37 @@ void CS1237_Init(void)
   P1 |= 0x1;
   
   P1SEL &= ~0x02; //普通IO口
-  P1DIR |= 0x02;  //P1_1定义为输出 CLK
+  P1DIR |= 0x02;  //P1_0定义为输出 LED
   P1INP &=~0x02;	//打开上拉
 
   P1SEL &= ~0x04; //普通IO口
-  P1DIR &= ~0x04;  //P1_1定义为输入 DIO
+  P1DIR &= ~0x04;  //P1_2定义为输入 DIO
   P1INP &=~0x04;	//打开上拉
+#else
+  P1SEL &= ~0x01; //普通IO口
+  P1DIR |= 0x01;  //P1_0定义为输出
+  P1INP &=~0x01;	//打开上拉
   
+  P1 |= 0x1;
+  P1 &= ~0x1;
+  P1 |= 0x1;
+ 
+  
+  P0SEL &= ~(1<<6); //普通IO口
+  P0DIR |= (1<<6);  //P0_6定义为输出 CLK
+  P0INP &=~(1<<6);	//打开上拉
+
+  P0SEL &= ~(1<<5); //普通IO口
+  P0DIR &= ~(1<<5);  //P0_5定义为输入 DIO
+  P0INP &=~(1<<5);	//打开上拉
+
+#endif
   Delay(1000);
   CS1237_WriteReg(0x1C);        //40Hz,128PGA
 }
 uint8 read_io(void)
 {
-  return (P1&0x4)?1:0;
+  return (P0&(1<<5))?1:0;
 }
 /******************************************************************************
   * @brief  .
